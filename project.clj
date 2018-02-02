@@ -3,9 +3,10 @@
                  [org.clojure/clojurescript "1.9.946"]
                  [org.clojure/core.async "0.4.474"]
                  [binaryage/chromex "0.5.15"]
-                 [binaryage/devtools "0.9.8"]
+                 [binaryage/devtools "0.9.9"]
                  [figwheel "0.5.14"]
-                 [environ "1.1.0"]]
+                 [environ "1.1.0"]
+                 [prismatic/dommy "1.1.0"]]
 
   :plugins [[lein-cljsbuild "1.1.6"]
             [lein-figwheel "0.5.14"]

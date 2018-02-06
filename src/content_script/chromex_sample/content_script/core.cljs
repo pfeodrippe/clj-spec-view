@@ -1,11 +1,16 @@
 (ns chromex-sample.content-script.core
-  (:require-macros [cljs.core.async.macros :refer [go-loop]])
+  (:require-macros [cljs.core.async.macros :refer [go-loop]]
+                   [hiccups.core :refer [html]])
   (:require [cljs.core.async :refer [<!]]
             [chromex.logging :refer-macros [log info warn error group group-end]]
             [chromex.protocols :refer [post-message!]]
             [chromex.ext.runtime :as runtime :refer-macros [connect]]
+            [clojure.string :as str]
+            [hiccups.runtime :as hiccupsrt]
             [dommy.core :refer-macros [sel sel1]]
-            [clojure.string :as str]))
+            [domina.xpath :refer [xpath]]
+            [domina.events :as de]
+            [domina :as d]))
 
 ; -- a message loop --
 
@@ -22,46 +27,56 @@
 
 
 ;; Custom code
-(defn handle-text
-  [text]
-  (set! (.-nodeValue text)
-        (-> text
-            .-nodeValue
-            (str/replace #"Danousse" "JESUS"))))
+(def result-id "result")
 
-(defn walk-element
-  [el]
-  (let [t (.-nodeType el)]
-    (cond
-      (or (= t 1) ;; Element
-          (= t 9) ;; Document
-          (= t 11)) (loop [child (.-firstChild el)]
-                      (when child
-                        (walk-element child)
-                        (recur (.-nextSibling child))))
-      (= t 3) (handle-text el) )))
 
-(defn walk-over-body
-  []
-  (walk-element (sel1 :body)))
+(defn get-window-offset [pixels]
+  (str (+ pixels 5) "px"))
+
+
+(defn make-styles [page-x page-y]
+  {:left (get-window-offset page-x)
+   :top (get-window-offset page-y)
+   :position "absolute"
+   :background "white"
+   :border "1px solid black"
+   :color "black"})
+
+
+(defn str-style [info]
+  (apply str (map #(let [[kwd val] %]
+                     (str (name kwd) ":" val "; "))
+                  info)))
+
+
+(defn create-result-el [text [page-x page-y]]
+  (html
+   [:div {:id result-id
+          :style (str-style (make-styles page-x page-y))}
+    [:p text]]))
+
+
+(defn listen-text-selection! []
+  (de/listen! js/document :mouseup (fn [d-e]
+                                     (let [e (.-event_ (.-evt d-e))
+                                           selection (str (.getSelection js/window))]
+                                       (if (not (str/blank? selection))
+                                         (d/append! (xpath "//body")
+                                                    (create-result-el selection [(.-pageX e)
+                                                                                 (.-pageY e)]))))))
+  (de/listen! js/document :mousedown (fn [e]
+                                       (let [result-el (d/by-id result-id)]
+                                         (when-not (d/ancestor? result-el
+                                                                (.-target (.-evt e)))
+                                           (d/destroy! result-el))))))
 
 
 ; -- a simple page analysis  --
-
-(defn do-page-analysis! [background-port]
-  (let [script-elements (.getElementsByTagName js/document "div")
-        script-count (.-length script-elements)
-        title (.-title js/document)
-        msg (str "CONTENT SCRIPT: document '" title "' contains " script-count " script tags.")]
-    (log msg)
-    (post-message! background-port msg)))
-
 (defn connect-to-background-page! []
   (let [background-port (runtime/connect)]
     (post-message! background-port "hello from CONTENT SCRIPT!")
     (run-message-loop! background-port)
-    (do-page-analysis! background-port)
-    (walk-over-body)))
+    (listen-text-selection!)))
 
 ; -- main entry point --
 

@@ -6,7 +6,10 @@
                  [binaryage/devtools "0.9.9"]
                  [figwheel "0.5.14"]
                  [environ "1.1.0"]
-                 [prismatic/dommy "1.1.0"]]
+                 [prismatic/dommy "1.1.0"]
+                 [hiccups "0.3.0"]
+                 [domina "1.0.3"]
+                 [cljs-ajax "0.5.3"]]
 
   :plugins [[lein-cljsbuild "1.1.6"]
             [lein-figwheel "0.5.14"]

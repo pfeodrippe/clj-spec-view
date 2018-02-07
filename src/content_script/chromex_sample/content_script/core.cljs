@@ -60,7 +60,8 @@
   (html
    [:div {:id result-id
           :style (str-style (make-styles page-x page-y))}
-    [:p text]]))
+    [:textarea {:rows 10 :cols 80}
+     text]]))
 
 
 (defn listen-text-selection! []
@@ -74,6 +75,7 @@
                                (create-result-el
                                 (->> @repo-specs
                                      vals
+                                     (map #(string/join "\n\n" %))
                                      (string/join "\n\n\n"))
                                 [(.-pageX e)
                                  (.-pageY e)]))))))

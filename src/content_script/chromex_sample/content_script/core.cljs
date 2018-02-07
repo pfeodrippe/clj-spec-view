@@ -16,6 +16,10 @@
             [goog.crypt.base64 :as b64]))
 
 
+;; Atom vars
+(def repo-specs (atom {}))
+
+
                                         ; -- a message loop --
 (defn process-message! [message]
   (log "CONTENT SCRIPT: got message:" message))
@@ -60,18 +64,26 @@
 
 
 (defn listen-text-selection! []
-  (de/listen! js/document :mouseup (fn [d-e]
-                                     (let [e (.-event_ (.-evt d-e))
-                                           selection (str (.getSelection js/window))]
-                                       (if (not (string/blank? selection))
-                                         (d/append! (xpath "//body")
-                                                    (create-result-el selection [(.-pageX e)
-                                                                                 (.-pageY e)]))))))
-  (de/listen! js/document :mousedown (fn [e]
-                                       (let [result-el (d/by-id result-id)]
-                                         (when-not (d/ancestor? result-el
-                                                                (.-target (.-evt e)))
-                                           (d/destroy! result-el))))))
+  (de/listen! js/document
+              :mouseup
+              (fn [d-e]
+                (let [e (.-event_ (.-evt d-e))
+                      selection (str (.getSelection js/window))]
+                  (if (not (string/blank? selection))
+                    (d/append! (xpath "//body")
+                               (create-result-el
+                                (->> @repo-specs
+                                     vals
+                                     (string/join "\n\n\n"))
+                                [(.-pageX e)
+                                 (.-pageY e)]))))))
+  (de/listen! js/document
+              :mousedown
+              (fn [e]
+                (let [result-el (d/by-id result-id)]
+                  (when-not (d/ancestor? result-el
+                                         (.-target (.-evt e)))
+                    (d/destroy! result-el))))))
 
 
 
@@ -171,13 +183,13 @@
     (post-message! background-port "hello from CONTENT SCRIPT!")
     (run-message-loop! background-port)
 
-    (go (log
-         (-> js/window
-             .-location
-             .-href
-             url->repo
-             collect-fdefs-at-repo
-             <!)))
+    (go (reset! repo-specs
+                (-> js/window
+                    .-location
+                    .-href
+                    url->repo
+                    collect-fdefs-at-repo
+                    <!)))
 
     (listen-text-selection!)))
 

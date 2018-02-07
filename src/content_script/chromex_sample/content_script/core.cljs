@@ -139,13 +139,14 @@
 ;; Collect specs
 (defn collect-fdefs-at-repo
   [repo]
-  (go (let [urls (->> (:items (<! (search-repo-code repo "clojure.spec.alpha")))
-                      (map :git_url))
+  (go (let [items (:items (<! (search-repo-code repo "clojure.spec.alpha")))
+            urls (map :git_url items)
+            paths (map :path items)
             collector (atom [])]
         (doseq [url urls]
           (swap! collector conj (-> (<! (decode-url url))
                                     find-fdefs)))
-        @collector)))
+        (zipmap paths @collector))))
 
 
 ; -- a simple page analysis  --

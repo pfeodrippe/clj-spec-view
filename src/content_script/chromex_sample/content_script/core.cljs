@@ -1,5 +1,5 @@
 (ns chromex-sample.content-script.core
-  (:require-macros [cljs.core.async.macros :refer [go-loop]]
+  (:require-macros [cljs.core.async.macros :refer [go-loop go]]
                    [hiccups.core :refer [html]])
   (:require [cljs.core.async :refer [<!]]
             [chromex.logging :refer-macros [log info warn error group group-end]]
@@ -10,10 +10,23 @@
             [dommy.core :refer-macros [sel sel1]]
             [domina.xpath :refer [xpath]]
             [domina.events :as de]
-            [domina :as d]))
+            [domina :as d]
+            [cljs-http.client :as http]
+            [cljs.core.async :refer [<!]]
+            [goog.crypt.base64 :as b64]))
+
+
+;; Vars
+(def github-api "https://api.github.com/graphql")
+(def viewer-data-query "query {
+                              viewer {
+                                      login
+                                      name
+                                      }
+                              }")
+
 
 ; -- a message loop --
-
 (defn process-message! [message]
   (log "CONTENT SCRIPT: got message:" message))
 
@@ -71,6 +84,39 @@
                                            (d/destroy! result-el))))))
 
 
+;; Github
+(def github-api "https://api.github.com")
+
+(defn build-search-repo-code
+  [repo code]
+  (str github-api
+       "/search/code?q="
+       code
+       "+repo:"
+       repo))
+
+(defn search-repo-code
+  [repo code]
+  (go (let [response (<! (http/get (build-search-repo-code repo code)
+                                   {:with-credentials? false
+                                    :basic-auth {:username "pfeodrippe"
+                                                 :password token}}))]
+        #_(prn (:status response))
+        (:body response))))
+
+(defn decode-file
+  [url]
+  (go
+    (-> (<! (http/get url
+                      {:with-credentials? false
+                       :basic-auth {:username "pfeodrippe"
+                                    :password token}}))
+        :body
+        :content
+        b64/decodeString)))
+
+
+
 ; -- a simple page analysis  --
 (defn connect-to-background-page! []
   (let [background-port (runtime/connect)]
@@ -83,3 +129,26 @@
 (defn init! []
   (log "CONTENT SCRIPT: int")
   (connect-to-background-page!))
+
+(comment
+
+  (go
+    (cljs.pprint/pprint
+     (->> (:items (<! (search-repo-code "pfeodrippe/banka" "clojure.spec.alpha")))
+          #_(map keys))))
+
+
+  (go
+    (cljs.pprint/pprint
+     (<! (decode-file "https://api.github.com/repositories/101492674/contents/test/banka/boundary/database_test.clj?ref=c9d5cbcdc3919050c9d9f1a95554466224a0d142"))))
+
+
+  (go (let [response (<! (http/post github-api
+                                    {:with-credentials? false
+                                     :json-params {"query" viewer-data-query}
+                                     :headers {"Authorization"
+                                               "Bearer XXXXXXXX"}}))]
+        (prn (:status response))
+        (prn (:data (:body response)))))
+
+  )

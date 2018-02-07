@@ -9,7 +9,8 @@
                  [prismatic/dommy "1.1.0"]
                  [hiccups "0.3.0"]
                  [domina "1.0.3"]
-                 [cljs-ajax "0.5.3"]]
+                 [cljs-ajax "0.5.3"]
+                 [cljs-http "0.1.44"]]
 
   :plugins [[lein-cljsbuild "1.1.6"]
             [lein-figwheel "0.5.14"]
@@ -70,6 +71,10 @@
                            :popup      {:source-paths ["checkouts/cljs-devtools/src/lib"
                                                        "checkouts/chromex/src/lib"
                                                        "checkouts/chromex/src/exts"]}}}}
+
+             :dev {:dependencies [[com.cemerick/piggieback "0.2.1"]
+                                  [figwheel-sidecar "0.5.8"]]}
+
              :checkouts-content-script
              ; DON'T FORGET TO UPDATE scripts/ensure-checkouts.sh
              {:cljsbuild {:builds

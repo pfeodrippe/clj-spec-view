@@ -85,6 +85,7 @@
 
 
 ;; Github
+;; v3 API
 (def github-api "https://api.github.com")
 
 (defn build-search-repo-code
@@ -99,22 +100,52 @@
   [repo code]
   (go (let [response (<! (http/get (build-search-repo-code repo code)
                                    {:with-credentials? false
-                                    :basic-auth {:username "pfeodrippe"
+                                    :basic-auth {:username username
                                                  :password token}}))]
-        #_(prn (:status response))
         (:body response))))
 
-(defn decode-file
+
+(defn decode-url
   [url]
   (go
     (-> (<! (http/get url
                       {:with-credentials? false
-                       :basic-auth {:username "pfeodrippe"
+                       :basic-auth {:username username
                                     :password token}}))
         :body
         :content
         b64/decodeString)))
 
+
+;; Pattern helper functions
+(defn re-pos [re s]
+  (let [re (js/RegExp. (.-source re) "g")]
+    (loop [res {}]
+      (if-let [m (.exec re s)]
+        (recur (assoc res (.-index m) (first m)))
+        res))))
+
+(defn read-from-idx
+  [idx s]
+  (cljs.reader/read-string (subs s idx)))
+
+(defn find-fdefs
+  [s]
+  (->> (re-pos #"\(s/fdef([^\)]+)\)" s)
+       keys
+       (map #(read-from-idx % s))))
+
+
+;; Collect specs
+(defn collect-fdefs-at-repo
+  [repo]
+  (go (let [urls (->> (:items (<! (search-repo-code repo "clojure.spec.alpha")))
+                      (map :git_url))
+            collector (atom [])]
+        (doseq [url urls]
+          (swap! collector conj (-> (<! (decode-url url))
+                                    find-fdefs)))
+        @collector)))
 
 
 ; -- a simple page analysis  --
@@ -129,6 +160,8 @@
 (defn init! []
   (log "CONTENT SCRIPT: int")
   (connect-to-background-page!))
+
+
 
 (comment
 

@@ -5,7 +5,7 @@
             [chromex.logging :refer-macros [log info warn error group group-end]]
             [chromex.protocols :refer [post-message!]]
             [chromex.ext.runtime :as runtime :refer-macros [connect]]
-            [clojure.string :as str]
+            [clojure.string :as string]
             [hiccups.runtime :as hiccupsrt]
             [dommy.core :refer-macros [sel sel1]]
             [domina.xpath :refer [xpath]]
@@ -16,17 +16,7 @@
             [goog.crypt.base64 :as b64]))
 
 
-;; Vars
-(def github-api "https://api.github.com/graphql")
-(def viewer-data-query "query {
-                              viewer {
-                                      login
-                                      name
-                                      }
-                              }")
-
-
-; -- a message loop --
+                                        ; -- a message loop --
 (defn process-message! [message]
   (log "CONTENT SCRIPT: got message:" message))
 
@@ -73,7 +63,7 @@
   (de/listen! js/document :mouseup (fn [d-e]
                                      (let [e (.-event_ (.-evt d-e))
                                            selection (str (.getSelection js/window))]
-                                       (if (not (str/blank? selection))
+                                       (if (not (string/blank? selection))
                                          (d/append! (xpath "//body")
                                                     (create-result-el selection [(.-pageX e)
                                                                                  (.-pageY e)]))))))
@@ -83,6 +73,11 @@
                                                                 (.-target (.-evt e)))
                                            (d/destroy! result-el))))))
 
+
+
+;; Credentials
+(def credentials (atom {:username ""
+                        :password ""}))
 
 ;; Github
 ;; v3 API
@@ -100,8 +95,7 @@
   [repo code]
   (go (let [response (<! (http/get (build-search-repo-code repo code)
                                    {:with-credentials? false
-                                    :basic-auth {:username username
-                                                 :password token}}))]
+                                    :basic-auth @credentials}))]
         (:body response))))
 
 
@@ -110,8 +104,7 @@
   (go
     (-> (<! (http/get url
                       {:with-credentials? false
-                       :basic-auth {:username username
-                                    :password token}}))
+                       :basic-auth @credentials}))
         :body
         :content
         b64/decodeString)))
@@ -125,15 +118,38 @@
         (recur (assoc res (.-index m) (first m)))
         res))))
 
+(defn reduce-closed-paren
+  [acc [k v]]
+  (if (and (> (:o acc ) 0)
+           (= (:o acc ) (:c acc)))
+    (reduced (:last-index acc))
+    (case v
+      "(" (-> (update acc :o inc)
+              (assoc :last-index k))
+      ")" (-> (update acc :c inc)
+              (assoc :last-index k)))))
+
 (defn read-from-idx
   [idx s]
-  (cljs.reader/read-string (subs s idx)))
+  (let [open-parens (re-pos #"\(" (subs s idx))
+        closed-parens (re-pos #"\)" (subs s idx))]
+    (subs s idx (+ idx (inc (reduce reduce-closed-paren
+                                    {:o 0 :c 0 :last-index -1}
+                                    (->> (merge open-parens closed-parens)
+                                         (into (sorted-map)))))))))
 
 (defn find-fdefs
   [s]
   (->> (re-pos #"\(s/fdef([^\)]+)\)" s)
        keys
        (map #(read-from-idx % s))))
+
+
+;; Helper functions
+(defn url->repo
+  [url]
+  (->> (subvec (string/split url "/") 3 5)
+       (string/join "/")))
 
 
 ;; Collect specs
@@ -149,14 +165,23 @@
         (zipmap paths @collector))))
 
 
-; -- a simple page analysis  --
+                                        ; -- a simple page analysis  --
 (defn connect-to-background-page! []
   (let [background-port (runtime/connect)]
     (post-message! background-port "hello from CONTENT SCRIPT!")
     (run-message-loop! background-port)
+
+    (go (log
+         (-> js/window
+             .-location
+             .-href
+             url->repo
+             collect-fdefs-at-repo
+             <!)))
+
     (listen-text-selection!)))
 
-; -- main entry point --
+                                        ; -- main entry point --
 
 (defn init! []
   (log "CONTENT SCRIPT: int")

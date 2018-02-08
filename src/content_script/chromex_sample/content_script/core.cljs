@@ -70,9 +70,10 @@
               :mouseover
               (fn [d-e]
                 (let [e (.-event_ (.-evt d-e))
+                      el (.. d-e -evt -target)
                       selection (name
                                  (keyword
-                                  (string/replace (.. d-e -evt -target -innerHTML) #" " "")))
+                                  (string/replace (.-innerHTML el) #" " "")))
                       spec (->> @repo-specs
                                 vals
                                 (apply concat)
@@ -81,16 +82,22 @@
                                 first)]
                   (if (and (not (string/blank? selection))
                            (not (nil? spec)))
-                    (d/append! (xpath "//body")
-                               (create-result-el spec
-                                                 [(.-pageX e)
-                                                  (.-pageY e)]))))))
+                    (let [range (.createRange js/document)
+                          sel (.getSelection js/window)]
+                      (.selectNodeContents range el)
+                      (.removeAllRanges sel)
+                      (.addRange sel range)
+                      (d/append! (xpath "//body")
+                                 (create-result-el spec
+                                                   [(.-pageX e)
+                                                    (.-pageY e)])))))))
   (de/listen! js/document
               :mouseout
               (fn [e]
                 (let [result-el (d/by-id result-id)]
                   (when-not (d/ancestor? result-el
                                          (.-target (.-evt e)))
+                    (.removeAllRanges (.getSelection js/window))
                     (d/destroy! result-el))))))
 
 

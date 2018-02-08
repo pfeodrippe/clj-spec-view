@@ -27,6 +27,9 @@
 
 ;; Atom vars
 (def repo-specs (atom {}))
+;; Credentials
+(def credentials (atom {:username ""
+                        :password ""}))
 
 
                                         ; -- a message loop --
@@ -110,11 +113,6 @@
                     (.removeAllRanges (.getSelection js/window))
                     (d/destroy! result-el))))))
 
-
-
-;; Credentials
-(def credentials (atom {:username ""
-                        :password ""}))
 
 ;; Github
 ;; v3 API

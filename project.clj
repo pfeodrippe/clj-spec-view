@@ -10,7 +10,8 @@
                  [hiccups "0.3.0"]
                  [domina "1.0.3"]
                  [cljs-ajax "0.5.3"]
-                 [cljs-http "0.1.44"]]
+                 [cljs-http "0.1.44"]
+                 [cljsjs/highlight "9.12.0-1"]]
 
   :plugins [[lein-cljsbuild "1.1.6"]
             [lein-figwheel "0.5.14"]

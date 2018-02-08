@@ -13,7 +13,9 @@
             [domina :as d]
             [cljs-http.client :as http]
             [cljs.core.async :refer [<!]]
-            [goog.crypt.base64 :as b64]))
+            [goog.crypt.base64 :as b64]
+            [cljsjs.highlight]
+            [cljsjs.highlight.langs.clojure]))
 
 
 ;; Atom vars
@@ -60,8 +62,7 @@
   (html
    [:div {:id result-id
           :style (str-style (make-styles page-x page-y))}
-    [:textarea {:rows 10 :cols 80}
-     text]]))
+    [:pre [:code text]]]))
 
 
 ;; TODO: highlight code, decrease code, user token
@@ -90,7 +91,9 @@
                       (d/append! (xpath "//body")
                                  (create-result-el spec
                                                    [(.-pageX e)
-                                                    (.-pageY e)])))))))
+                                                    (.-pageY e)]))
+                      (.highlightBlock js/hljs
+                                       (-> js/document (.querySelector "code"))))))))
   (de/listen! js/document
               :mouseout
               (fn [e]

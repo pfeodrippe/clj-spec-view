@@ -64,12 +64,15 @@
      text]]))
 
 
+;; TODO: highlight code, decrease code, user token
 (defn listen-text-selection! []
   (de/listen! js/document
               :mouseover
               (fn [d-e]
                 (let [e (.-event_ (.-evt d-e))
-                      selection (.-innerHTML (.-target (.-evt d-e)))
+                      selection (name
+                                 (keyword
+                                  (string/replace (.. d-e -evt -target -innerHTML) #" " "")))
                       spec (->> @repo-specs
                                 vals
                                 (apply concat)

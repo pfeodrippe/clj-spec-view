@@ -66,10 +66,10 @@
 
 (defn listen-text-selection! []
   (de/listen! js/document
-              :mouseup
+              :mouseover
               (fn [d-e]
                 (let [e (.-event_ (.-evt d-e))
-                      selection (str (.getSelection js/window))
+                      selection (.-innerHTML (.-target (.-evt d-e)))
                       spec (->> @repo-specs
                                 vals
                                 (apply concat)
@@ -83,7 +83,7 @@
                                                  [(.-pageX e)
                                                   (.-pageY e)]))))))
   (de/listen! js/document
-              :mousedown
+              :mouseout
               (fn [e]
                 (let [result-el (d/by-id result-id)]
                   (when-not (d/ancestor? result-el

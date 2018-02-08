@@ -69,16 +69,19 @@
               :mouseup
               (fn [d-e]
                 (let [e (.-event_ (.-evt d-e))
-                      selection (str (.getSelection js/window))]
-                  (if (not (string/blank? selection))
+                      selection (str (.getSelection js/window))
+                      spec (->> @repo-specs
+                                vals
+                                (apply concat)
+                                (filter #(= (:fn %) selection))
+                                (map :text)
+                                first)]
+                  (if (and (not (string/blank? selection))
+                           (not (nil? spec)))
                     (d/append! (xpath "//body")
-                               (create-result-el
-                                (->> @repo-specs
-                                     vals
-                                     (map #(string/join "\n\n" %))
-                                     (string/join "\n\n\n"))
-                                [(.-pageX e)
-                                 (.-pageY e)]))))))
+                               (create-result-el spec
+                                                 [(.-pageX e)
+                                                  (.-pageY e)]))))))
   (de/listen! js/document
               :mousedown
               (fn [e]
@@ -132,31 +135,34 @@
         (recur (assoc res (.-index m) (first m)))
         res))))
 
-(defn reduce-closed-paren
-  [acc [k v]]
-  (if (and (> (:o acc ) 0)
-           (= (:o acc ) (:c acc)))
-    (reduced (:last-index acc))
-    (case v
-      "(" (-> (update acc :o inc)
-              (assoc :last-index k))
-      ")" (-> (update acc :c inc)
-              (assoc :last-index k)))))
+(defn build-reducer-with-delimiters
+  [o-dlmt c-dlmt]
+  (fn [acc [k v]]
+    (if (and (> (:o acc ) 0)
+             (= (:o acc ) (:c acc)))
+      (reduced (:last-index acc))
+      (cond
+        (= v o-dlmt) (-> (update acc :o inc)
+                         (assoc :last-index k))
+        (= v c-dlmt) (-> (update acc :c inc)
+                         (assoc :last-index k))))))
+
 
 (defn read-from-idx
-  [idx s]
-  (let [open-parens (re-pos #"\(" (subs s idx))
-        closed-parens (re-pos #"\)" (subs s idx))]
-    (subs s idx (+ idx (inc (reduce reduce-closed-paren
+  [idx s o-dlmt c-dlmt]
+  (let [open-parens (re-pos (re-pattern (str "\\" o-dlmt)) (subs s idx))
+        closed-parens (re-pos (re-pattern (str "\\" c-dlmt)) (subs s idx))]
+    (subs s idx (+ idx (inc (reduce (build-reducer-with-delimiters o-dlmt c-dlmt)
                                     {:o 0 :c 0 :last-index -1}
                                     (->> (merge open-parens closed-parens)
                                          (into (sorted-map)))))))))
+
 
 (defn find-fdefs
   [s]
   (->> (re-pos #"\(s/fdef([^\)]+)\)" s)
        keys
-       (map #(read-from-idx % s))))
+       (map #(read-from-idx % s "(" ")"))))
 
 
 ;; Helper functions
@@ -174,8 +180,15 @@
             paths (map :path items)
             collector (atom [])]
         (doseq [url urls]
-          (swap! collector conj (-> (<! (decode-url url))
-                                    find-fdefs)))
+          (let [file-str (<! (decode-url url))
+                raw-fdefs (find-fdefs file-str)
+                fdefs (map #(identity {:text %
+                                       :fn (-> %
+                                               (string/split #" ")
+                                               second
+                                               (string/replace #"\n" ""))})
+                           raw-fdefs)]
+            (swap! collector conj fdefs)))
         (zipmap paths @collector))))
 
 

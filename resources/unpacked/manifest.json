@@ -19,13 +19,11 @@
         "128": "images/icon128.png"
     },
     "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
+    "web_accessible_resources": ["styles/*"],
     "content_scripts": [
         {
             "matches": [
                 "<all_urls>"
-            ],
-            "css": [
-                "styles/zenburn.min.css"
             ],
             "js": [
                 "compiled/content-script/main.js"

@@ -4,7 +4,7 @@
   (:require [cljs.core.async :refer [<!]]
             [chromex.logging :refer-macros [log info warn error group group-end]]
             [chromex.protocols :refer [post-message!]]
-            [chromex.ext.runtime :as runtime :refer-macros [connect]]
+            [chromex.ext.runtime :as runtime :refer-macros [connect get-url]]
             [clojure.string :as string]
             [hiccups.runtime :as hiccupsrt]
             [dommy.core :refer-macros [sel sel1]]
@@ -16,6 +16,13 @@
             [goog.crypt.base64 :as b64]
             [cljsjs.highlight]
             [cljsjs.highlight.langs.clojure]))
+
+
+(let [style (.createElement js/document "link")]
+  (set! (.-rel style) "stylesheet")
+  (set! (.-type style) "text/css")
+  (set! (.-href style) (get-url "styles/zenburn.min.css"))
+  (.appendChild (or (.-head js/document) (.-documentElement js/document)) style))
 
 
 ;; Atom vars

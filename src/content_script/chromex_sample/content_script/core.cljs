@@ -73,7 +73,7 @@
                       spec (->> @repo-specs
                                 vals
                                 (apply concat)
-                                (filter #(= (:fn %) selection))
+                                (filter #(= (name (keyword (:fn %))) selection))
                                 (map :text)
                                 first)]
                   (if (and (not (string/blank? selection))

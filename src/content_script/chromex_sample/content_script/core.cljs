@@ -46,16 +46,16 @@
 (def result-id "result")
 
 
-(defn get-window-offset [pixels]
-  (str (+ pixels 5) "px"))
+(defn get-window-offset [pixels off]
+  (str (+ pixels off) "px"))
 
 
 (defn make-styles [page-x page-y]
-  {:left (get-window-offset page-x)
-   :top (get-window-offset page-y)
+  {:left (get-window-offset page-x 10)
+   :top (get-window-offset page-y 10)
    :position "absolute"
    :background "white"
-   :border "1px solid black"
+   :opacity 1.0
    :color "black"})
 
 
@@ -72,7 +72,7 @@
     [:pre [:code text]]]))
 
 
-;; TODO: highlight code, decrease code, user token
+;; TODO: user token
 (defn listen-text-selection! []
   (de/listen! js/document
               :mouseover

@@ -11,7 +11,10 @@
                  [domina "1.0.3"]
                  [cljs-ajax "0.5.3"]
                  [cljs-http "0.1.44"]
-                 [cljsjs/highlight "9.12.0-1"]]
+                 [cljsjs/highlight "9.12.0-1"]
+                 [re-com "2.1.0"]
+                 [reagent "0.8.0-alpha2"]
+                 [com.cognitect/transit-cljs "0.8.243"]]
 
   :plugins [[lein-cljsbuild "1.1.6"]
             [lein-figwheel "0.5.14"]

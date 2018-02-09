@@ -15,7 +15,12 @@
             [cljs.core.async :refer [<!]]
             [goog.crypt.base64 :as b64]
             [cljsjs.highlight]
-            [cljsjs.highlight.langs.clojure]))
+            [cljsjs.highlight.langs.clojure]
+            [cognitect.transit :as t]))
+
+
+(def reader (t/reader :json))
+(def writer (t/writer :json))
 
 
 ;; Append css to page
@@ -31,19 +36,6 @@
 ;; Credentials
 (def credentials (atom {:username ""
                         :password ""}))
-
-
-                                        ; -- a message loop --
-(defn process-message! [message]
-  (log "CONTENT SCRIPT: got message:" message))
-
-(defn run-message-loop! [message-channel]
-  (log "CONTENT SCRIPT: starting message loop...")
-  (go-loop []
-    (when-some [message (<! message-channel)]
-      (process-message! message)
-      (recur))
-    (log "CONTENT SCRIPT: leaving message loop")))
 
 
 ;; Views
@@ -100,7 +92,7 @@
   [d-e]
   (let [e (.-event_ (.-evt d-e))
         el (.. d-e -evt -target)
-        selection (str->name (string/replace (.-innerHTML el) #" " ""))
+        selection (-> el .-innerHTML (string/replace #" " "") str->name)
         spec (filter-spec @repo-specs selection)]
     (when (and (not (string/blank? selection))
                (not (nil? spec)))
@@ -222,26 +214,37 @@
         (zipmap paths @collector))))
 
 
-                                        ; -- a simple page analysis  --
+;; Messages
+(defn process-token! [token]
+  (swap! credentials assoc :password token)
+  (go (reset! repo-specs
+              (-> js/window
+                  .-location
+                  .-href
+                  url->repo
+                  collect-fdefs-at-repo
+                  <!))))
+
+(defn run-message-loop! [message-channel]
+  (log "CONTENT SCRIPT: starting message loop...")
+  (go-loop []
+    (when-some [message (t/read reader (<! message-channel))]
+      (case (:type message)
+        :fetch-token-res (process-token! (:msg message))
+        :default nil)
+      (recur))
+    (log "CONTENT SCRIPT: leaving message loop")))
+
 (defn connect-to-background-page! []
   (let [background-port (runtime/connect)]
-    (post-message! background-port "hello from CONTENT SCRIPT!")
+    (post-message! background-port (t/write writer
+                                            {:type :fetch-token}))
     (run-message-loop! background-port)
-
-    (go (reset! repo-specs
-                (-> js/window
-                    .-location
-                    .-href
-                    url->repo
-                    collect-fdefs-at-repo
-                    <!)))
-
     (listen-text-selection!)))
 
-                                        ; -- main entry point --
 
+;; Main entry point
 (defn init! []
-  (log "CONTENT SCRIPT: int")
   (connect-to-background-page!))
 
 

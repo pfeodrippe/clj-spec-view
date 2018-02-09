@@ -72,35 +72,47 @@
     [:pre [:code text]]]))
 
 
+;; Listeners helper functions
+(defn select-el!
+  [el]
+  (let [range (.createRange js/document)
+        sel (.getSelection js/window)]
+    (.selectNodeContents range el)
+    (.removeAllRanges sel)
+    (.addRange sel range)))
+
+(defn str->name
+  [s]
+  ((comp name keyword) s))
+
+(defn filter-spec
+  [repo-specs selection]
+  (->> repo-specs
+       vals
+       (apply concat)
+       (filter #(= (str->name (:fn %)) selection))
+       (map :text)
+       first))
+
+
 ;; Listeners
-(defn handle-mouse-over
+(defn handle-mouse-over!
   [d-e]
   (let [e (.-event_ (.-evt d-e))
         el (.. d-e -evt -target)
-        selection (name
-                   (keyword
-                    (string/replace (.-innerHTML el) #" " "")))
-        spec (->> @repo-specs
-                  vals
-                  (apply concat)
-                  (filter #(= (name (keyword (:fn %))) selection))
-                  (map :text)
-                  first)]
-    (if (and (not (string/blank? selection))
-             (not (nil? spec)))
-      (let [range (.createRange js/document)
-            sel (.getSelection js/window)]
-        (.selectNodeContents range el)
-        (.removeAllRanges sel)
-        (.addRange sel range)
-        (d/append! (xpath "//body")
-                   (create-result-el spec
-                                     [(.-pageX e)
-                                      (.-pageY e)]))
-        (.highlightBlock js/hljs
-                         (-> js/document (.querySelector "code")))))))
+        selection (str->name (string/replace (.-innerHTML el) #" " ""))
+        spec (filter-spec @repo-specs selection)]
+    (when (and (not (string/blank? selection))
+               (not (nil? spec)))
+      (select-el! el)
+      (d/append! (xpath "//body")
+                 (create-result-el spec
+                                   [(.-pageX e)
+                                    (.-pageY e)]))
+      (.highlightBlock js/hljs
+                       (-> js/document (.querySelector "code"))))))
 
-(defn handle-mouse-out
+(defn handle-mouse-out!
   [e]
   (let [result-el (d/by-id result-id)]
     (when-not (d/ancestor? result-el
@@ -110,12 +122,8 @@
 
 ;; TODO: user token, give hints about who has spec
 (defn listen-text-selection! []
-  (de/listen! js/document
-              :mouseover
-              handle-mouse-over)
-  (de/listen! js/document
-              :mouseout
-              handle-mouse-out))
+  (de/listen! js/document :mouseover handle-mouse-over!)
+  (de/listen! js/document :mouseout handle-mouse-out!))
 
 
 ;; Github

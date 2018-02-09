@@ -18,6 +18,7 @@
             [cljsjs.highlight.langs.clojure]))
 
 
+;; Append css to page
 (let [style (.createElement js/document "link")]
   (set! (.-rel style) "stylesheet")
   (set! (.-type style) "text/css")
@@ -45,13 +46,11 @@
     (log "CONTENT SCRIPT: leaving message loop")))
 
 
-;; Custom code
+;; Views
 (def result-id "result")
-
 
 (defn get-window-offset [pixels off]
   (str (+ pixels off) "px"))
-
 
 (defn make-styles [page-x page-y]
   {:left (get-window-offset page-x 10)
@@ -61,12 +60,10 @@
    :opacity 1.0
    :color "black"})
 
-
 (defn str-style [info]
   (apply str (map #(let [[kwd val] %]
                      (str (name kwd) ":" val "; "))
                   info)))
-
 
 (defn create-result-el [text [page-x page-y]]
   (html
@@ -75,43 +72,50 @@
     [:pre [:code text]]]))
 
 
-;; TODO: user token
+;; Listeners
+(defn handle-mouse-over
+  [d-e]
+  (let [e (.-event_ (.-evt d-e))
+        el (.. d-e -evt -target)
+        selection (name
+                   (keyword
+                    (string/replace (.-innerHTML el) #" " "")))
+        spec (->> @repo-specs
+                  vals
+                  (apply concat)
+                  (filter #(= (name (keyword (:fn %))) selection))
+                  (map :text)
+                  first)]
+    (if (and (not (string/blank? selection))
+             (not (nil? spec)))
+      (let [range (.createRange js/document)
+            sel (.getSelection js/window)]
+        (.selectNodeContents range el)
+        (.removeAllRanges sel)
+        (.addRange sel range)
+        (d/append! (xpath "//body")
+                   (create-result-el spec
+                                     [(.-pageX e)
+                                      (.-pageY e)]))
+        (.highlightBlock js/hljs
+                         (-> js/document (.querySelector "code")))))))
+
+(defn handle-mouse-out
+  [e]
+  (let [result-el (d/by-id result-id)]
+    (when-not (d/ancestor? result-el
+                           (.-target (.-evt e)))
+      (.removeAllRanges (.getSelection js/window))
+      (d/destroy! result-el))))
+
+;; TODO: user token, give hints about who has spec
 (defn listen-text-selection! []
   (de/listen! js/document
               :mouseover
-              (fn [d-e]
-                (let [e (.-event_ (.-evt d-e))
-                      el (.. d-e -evt -target)
-                      selection (name
-                                 (keyword
-                                  (string/replace (.-innerHTML el) #" " "")))
-                      spec (->> @repo-specs
-                                vals
-                                (apply concat)
-                                (filter #(= (name (keyword (:fn %))) selection))
-                                (map :text)
-                                first)]
-                  (if (and (not (string/blank? selection))
-                           (not (nil? spec)))
-                    (let [range (.createRange js/document)
-                          sel (.getSelection js/window)]
-                      (.selectNodeContents range el)
-                      (.removeAllRanges sel)
-                      (.addRange sel range)
-                      (d/append! (xpath "//body")
-                                 (create-result-el spec
-                                                   [(.-pageX e)
-                                                    (.-pageY e)]))
-                      (.highlightBlock js/hljs
-                                       (-> js/document (.querySelector "code"))))))))
+              handle-mouse-over)
   (de/listen! js/document
               :mouseout
-              (fn [e]
-                (let [result-el (d/by-id result-id)]
-                  (when-not (d/ancestor? result-el
-                                         (.-target (.-evt e)))
-                    (.removeAllRanges (.getSelection js/window))
-                    (d/destroy! result-el))))))
+              handle-mouse-out))
 
 
 ;; Github

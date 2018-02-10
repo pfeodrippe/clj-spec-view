@@ -9,4 +9,5 @@ Just place the cursor over a spec'ed function and see its spec. (see some fspec 
 [Create one](https://help.github.com/articles/creating-an-access-token-for-command-line-use).
 
 # Thanks
-To all the contributors and the [Chromex](https://github.com/binaryage/chromex)
+
+To all the contributors and the awesome [Chromex](https://github.com/binaryage/chromex) library.

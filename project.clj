@@ -1,4 +1,4 @@
-(defproject binaryage/chromex-sample "0.1.0-SNAPSHOT"
+(defproject binaryage/clj-spec-view "0.1.0-SNAPSHOT"
   :dependencies [[org.clojure/clojure "1.9.0"]
                  [org.clojure/clojurescript "1.9.946"]
                  [org.clojure/core.async "0.4.474"]
@@ -41,7 +41,7 @@
                                            :output-dir    "resources/unpacked/compiled/background"
                                            :asset-path    "compiled/background"
                                            :preloads      [devtools.preload]
-                                           :main          chromex-sample.background
+                                           :main          clj-spec-view.background
                                            :optimizations :none
                                            :source-map    true}}
                            :popup
@@ -51,7 +51,7 @@
                                            :output-dir    "resources/unpacked/compiled/popup"
                                            :asset-path    "compiled/popup"
                                            :preloads      [devtools.preload]
-                                           :main          chromex-sample.popup
+                                           :main          clj-spec-view.popup
                                            :optimizations :none
                                            :source-map    true}}}}}
              :unpacked-content-script
@@ -61,7 +61,7 @@
                             :compiler     {:output-to     "resources/unpacked/compiled/content-script/main.js"
                                            :output-dir    "resources/unpacked/compiled/content-script"
                                            :asset-path    "compiled/content-script"
-                                           :main          chromex-sample.content-script
+                                           :main          clj-spec-view.content-script
                                            ;:optimizations :whitespace                                                        ; content scripts cannot do eval / load script dynamically
                                            :optimizations :advanced                                                           ; let's use advanced build with pseudo-names for now, there seems to be a bug in deps ordering under :whitespace mode
                                            :pseudo-names  true
@@ -107,7 +107,7 @@
                             :compiler     {:output-to     "resources/release/compiled/background.js"
                                            :output-dir    "resources/release/compiled/background"
                                            :asset-path    "compiled/background"
-                                           :main          chromex-sample.background
+                                           :main          clj-spec-view.background
                                            :optimizations :advanced
                                            :elide-asserts true}}
                            :popup
@@ -115,7 +115,7 @@
                             :compiler     {:output-to     "resources/release/compiled/popup.js"
                                            :output-dir    "resources/release/compiled/popup"
                                            :asset-path    "compiled/popup"
-                                           :main          chromex-sample.popup
+                                           :main          clj-spec-view.popup
                                            :optimizations :advanced
                                            :elide-asserts true}}
                            :content-script
@@ -123,7 +123,7 @@
                             :compiler     {:output-to     "resources/release/compiled/content-script.js"
                                            :output-dir    "resources/release/compiled/content-script"
                                            :asset-path    "compiled/content-script"
-                                           :main          chromex-sample.content-script
+                                           :main          clj-spec-view.content-script
                                            :optimizations :advanced
                                            :elide-asserts true}}}}}}
 

@@ -1,5 +1,5 @@
-Copyright (c) BinaryAge Limited and contributors
-https://github.com/binaryage/chromex-sample/graphs/contributors
+Copyright (c) Paulo Feodrippe and contributors
+https://github.com/pfeodrippe/clj-spec-view/graphs/contributors
 
 MIT License
 

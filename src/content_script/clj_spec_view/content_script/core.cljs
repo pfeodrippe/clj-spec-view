@@ -1,4 +1,4 @@
-(ns chromex-sample.content-script.core
+(ns clj-spec-view.content-script.core
   (:require-macros [cljs.core.async.macros :refer [go-loop go]]
                    [hiccups.core :refer [html]])
   (:require [cljs.core.async :refer [<!]]

@@ -1,4 +1,4 @@
-(ns chromex-sample.background.storage
+(ns clj-spec-view.background.storage
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [cljs.core.async :refer [<! chan]]
             [chromex.logging :refer-macros [log info warn error group group-end]]

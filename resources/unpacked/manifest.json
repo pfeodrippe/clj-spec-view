@@ -3,7 +3,7 @@
    also we allow unsafe eval for figwheel
 */
 {
-    "name": "chromex-sample-dev",
+    "name": "clj-spec-view-dev",
     "version": "0.1.0",
     "browser_action": {
         "default_title": "Show the popup",

@@ -1,4 +1,4 @@
-(ns chromex-sample.popup.core
+(ns clj-spec-view.popup.core
   (:import [goog.dom query])
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [cljs.core.async :refer [<!]]

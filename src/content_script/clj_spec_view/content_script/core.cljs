@@ -215,7 +215,7 @@
 
 
 ;; Messages
-(defn process-token! [token]
+(defn handle-token! [token]
   (swap! credentials assoc :password token)
   (go (reset! repo-specs
               (-> js/window
@@ -230,15 +230,14 @@
   (go-loop []
     (when-some [message (t/read reader (<! message-channel))]
       (case (:type message)
-        :fetch-token-res (process-token! (:msg message))
+        :fetch-token-res (handle-token! (:msg message))
         :default nil)
       (recur))
     (log "CONTENT SCRIPT: leaving message loop")))
 
 (defn connect-to-background-page! []
   (let [background-port (runtime/connect)]
-    (post-message! background-port (t/write writer
-                                            {:type :fetch-token}))
+    (post-message! background-port (t/write writer {:type :fetch-token}))
     (run-message-loop! background-port)
     (listen-text-selection!)))
 

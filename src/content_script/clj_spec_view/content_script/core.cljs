@@ -112,7 +112,6 @@
       (.removeAllRanges (.getSelection js/window))
       (d/destroy! result-el))))
 
-;; TODO: user token, give hints about who has spec
 (defn listen-text-selection! []
   (de/listen! js/document :mouseover handle-mouse-over!)
   (de/listen! js/document :mouseout handle-mouse-out!))

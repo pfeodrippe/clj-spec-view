@@ -2,11 +2,21 @@
 
 ### An chome extension project that provide views of function specs at your browser (currently only github)
 
+[In current development, use at your risk]
 Just place the cursor over a spec'ed function and see its spec. (see some fspec examples at [Bigmouth repo](https://github.com/athos/Bigmouth/blob/master/src/bigmouth/interaction.clj)).
+Download the [chrome extension](https://chrome.google.com/webstore/detail/clj-spec-view/ohdilhfeehobpbnioeghljglgjbpjkin).
 
 #### Github Access Token (for rate limits or private repos)
 
-[Create one](https://help.github.com/articles/creating-an-access-token-for-command-line-use).
+[Create one](https://help.github.com/articles/creating-an-access-token-for-command-line-use) and access it from the extension popup button (at your toolbar).
+
+# TODO
+
+- Add icon at code
+- Search at actual branch
+- Find clojure.alpha.spec alias (now it shows any `fdef` definition
+- Open file of current spec
+- Add contribute guide
 
 # Thanks
 

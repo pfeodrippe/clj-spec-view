@@ -14,7 +14,7 @@ Download the [chrome extension](https://chrome.google.com/webstore/detail/clj-sp
 
 - Add icon at code
 - Search at actual branch
-- Find clojure.alpha.spec alias (now it shows any `fdef` definition
+- Find clojure.alpha.spec alias (now it shows any `fdef` definition)
 - Open file of current spec
 - Add contribute guide
 

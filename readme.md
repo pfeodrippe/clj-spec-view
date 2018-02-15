@@ -27,7 +27,7 @@
 Just place the cursor over a specified function and see its spec. 
 ![](demo.gif)
 
-You can see some fspec examples at [Bigmouth repo](https://github.com/athos/Bigmouth/blob/master/src/bigmouth/interaction.clj)).
+You can see some fspec examples at [Bigmouth repo](https://github.com/athos/Bigmouth/blob/master/src/bigmouth/interaction.clj).
 
 ### Github Access Token (for rate limits or private repos)
 
